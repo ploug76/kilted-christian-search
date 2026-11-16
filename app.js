@@ -127,8 +127,8 @@ async function run(){
   try{const Q=await search(q);lastQuery=Q;lastResults=Q?Q.res:[];shown=0;
     if(!Q){st.textContent='Type a word or phrase to search.';return}
     const where=curShow==='__all'?'all shows':curShow;
-    if(!lastResults.length){st.textContent=`No episodes in ${where} mention “${q}”.`+(Q.prefix?'':' Try ticking “Match word beginnings”.');return}
-    st.textContent=`${lastResults.length} episode${lastResults.length>1?'s':''} in ${where} mention “${q}”${Q.partial?' (no episode has every word; showing episodes with any of them)':''}, best matches first.`;
+    if(!lastResults.length){st.textContent=`No episodes in ${where} mention “${q.replace(/"/g,'')}”.`+(Q.prefix?'':' Try ticking “Match word beginnings”.');return}
+    st.textContent=`${lastResults.length} episode${lastResults.length>1?'s':''} in ${where} mention “${q.replace(/"/g,'')}”${Q.partial?' (no episode has every word; showing episodes with any of them)':''}, best matches first.`;
     renderMore();
   }catch(e){st.textContent='Search failed: '+e.message+'. Check your connection and try again.'}
 }
@@ -161,7 +161,7 @@ async function fillSnippet(card){
     const re=hlRegex(Q); if(!m){re.lastIndex=0;m=re.exec(text)}
     if(!m){sn.textContent='(match is in a word form; open the transcript)';return}
     const ls=lineStart(text,m.index); const tsm=text.slice(ls,ls+12).match(/^\[(\d\d:\d\d:\d\d)\]/);
-    let a=Math.max(0,m.index-140), z=Math.min(text.length,m.index+m[0].length+160);
+    let a=lineStart(text,Math.max(0,m.index-140)); let z=text.indexOf('\n',Math.min(text.length,m.index+m[0].length+160)); if(z<0)z=text.length;
     let piece=text.slice(a,z).replace(/\[\d\d:\d\d:\d\d\]\s*/g,'').replace(/\s+/g,' ');
     sn.innerHTML=(tsm?`<span class="ts">${tsm[1]}</span>`:'')+(a>0?'…':'')+highlight(piece,hlRegex(Q))+(z<text.length?'…':'');
   }catch(e){sn.textContent='Could not load the transcript ('+e.message+').'}
