@@ -8,7 +8,7 @@ const TOK=/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu;
 const norm=s=>s.normalize('NFC').toLowerCase().replace(/’/g,"'");
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmtDate=d=>{if(!d)return 'Date unknown';const [y,m,dd]=d.split('-').map(Number);return new Date(y,m-1,dd).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})};
-const fmtDur=s=>s?`${Math.floor(s/3600)?Math.floor(s/3600)+'h ':''}${Math.round(s%3600/60)}m`:'';
+const fmtDur=s=>{if(!s)return '';const t=Math.round(Number(s)/60);const h=Math.floor(t/60);return `${h?h+'h ':''}${t%60}m`};
 
 async function init(){
   const r=await fetch('docs.json'); DATA=await r.json();
