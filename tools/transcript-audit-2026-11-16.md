@@ -159,3 +159,7 @@ Peter approved re-transcribing the episodes where speech was missing.
 | 1089, 730, 526, 442, 288 (short loops) | | 168–181 wpm | complete |
 
 **Still queued** (short loops; until they finish, these still show the collapsed-loop note): 1094, 1004, 719, 513, 431 and 284.
+
+**Second publish.**
+- **Gap-fill on the other 11 passed episodes.** The same no-VAD gap-fill was run on short gaps of 0.5–3 min in 1116, 68, 509, 1059, 707, 828, 1089, 730, 526, 442 and 288. Only a few dozen words were added per episode.
+- **Six short-loop episodes failed and keep their originals.** Eps 1094, 1004, 719, 513, 431 and 284 failed both attempts: each new version had at least 10% fewer words than the original. Their originals are kept, with the short loop (under 1.5 minutes each) collapsed and noted on the site.
