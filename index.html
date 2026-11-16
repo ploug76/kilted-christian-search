@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kilted Christian Search</title>
+<meta name="description" content="Search every Kilted Christian episode transcript: Book of Heaven, Church by the Fire and more.">
+<meta name="theme-color" content="#14382b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KC Search">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icons/icon-192.png" alt="" width="36" height="36"><div><h1>Kilted Christian Search</h1><p id="stats">Loading episodes…</p></div>
+  <button id="installBtn" class="install" hidden>Install app</button></div>
+  <form id="searchForm" class="search" role="search" autocomplete="off">
+    <input id="q" type="search" placeholder="Search a topic, e.g. forgiveness" aria-label="Search transcripts" enterkeyhint="search">
+    <button type="submit">Search</button>
+  </form>
+  <div class="opts"><label><input type="checkbox" id="forms"> Match word beginnings (forgiv → forgive, forgiveness)</label>
+  <span class="hint">Use "quotes" for an exact phrase.</span></div>
+  <nav id="tabs" class="tabs" aria-label="Shows"></nav>
+</header>
+<main>
+  <div id="status" class="status" aria-live="polite"></div>
+  <div id="results"></div>
+  <button id="more" class="more" hidden>Show more</button>
+</main>
+<div id="viewer" class="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="vTitle">
+  <div class="vbar">
+    <button id="vClose" aria-label="Close">✕</button>
+    <div class="vhead"><strong id="vTitle"></strong><span id="vMeta"></span></div>
+  </div>
+  <div class="vnav"><button id="vPrev">▲ Prev</button><span id="vCount"></span><button id="vNext">▼ Next</button><a id="vLink" target="_blank" rel="noopener">Episode ↗</a></div>
+  <div id="vBody" class="vbody"></div>
+</div>
+<footer>Transcripts were machine-generated from the episode audio and may contain errors. Episode links go to the original Podbean pages.</footer>
+<script src="app.js"></script>
+</body>
+</html>
