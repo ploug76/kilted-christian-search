@@ -163,3 +163,22 @@ Peter approved re-transcribing the episodes where speech was missing.
 **Second publish.**
 - **Gap-fill on the other 11 passed episodes.** The same no-VAD gap-fill was run on short gaps of 0.5–3 min in 1116, 68, 509, 1059, 707, 828, 1089, 730, 526, 442 and 288. Only a few dozen words were added per episode.
 - **Six short-loop episodes failed and keep their originals.** Eps 1094, 1004, 719, 513, 431 and 284 failed both attempts: each new version had at least 10% fewer words than the original. Their originals are kept, with the short loop (under 1.5 minutes each) collapsed and noted on the site.
+
+**Third publish: patching the short stuck spots** (`/workspace/kilted-christian-index/patchloops.py`, log at `retx/patchloops.log`).
+- **Method.** For each stuck spot, I cut the loop's time range plus 20 seconds on each side and re-transcribed only that clip (speech filter off, condition_on_previous_text off, word timestamps; attempt 2 adds temperature fallback, beam 5 and a repetition penalty).
+- **Joins.** Each join was aligned by matching the clip's words against the original words in the padding, so nothing is duplicated or dropped.
+- **Checks on every patch:** no repeat loop, no 3-word overlap at either join, and a speech rate close to the surrounding talk. A low rate was allowed only when both joins aligned on 5 or more words.
+
+| Ep | Spot | Result |
+|---|---|---|
+| 719 | 01:32:05–01:32:23 ("I mean," ×18) | Fixed: 62 words, 207 wpm (surrounding talk 181); both joins aligned on 57–58 words. |
+| 513 | 00:21:40–00:21:57 ("We" ×19) | Fixed on attempt 2: 69 words, 182 wpm (surrounding 204). The DEI news clip the host played is now in the transcript. |
+| 431 | 00:13:26–00:13:47 ("Well," ×21) | Fixed: "And next on the line is Tad from Cincinnati… call in. Please do." The speech rate is low (66 wpm) because of a real pause while the host waited for callers; both joins aligned. |
+| 284 | 01:05:30–01:06:14 ("one" ×18) | Fixed: 144 words, 170 wpm (surrounding 161); joins aligned on 20 and 23 words. |
+| 1094 | 00:34:02–00:34:37 ("We can dance." ×29) | **Not fixable**: a song is playing ("The Safety Dance"; the host names it right after). Attempt 1 produced a looping chorus and attempt 2 produced nothing. The site now says a song is playing there instead of "speech missing". |
+| 1004 | 00:18:31–00:20:07 ("I" ×16) | **Not fixable**: a worship song is playing ("Will you ride with me"). The lyrics repeat and attempt 2 was nearly empty. It is labelled as a song on the site. |
+
+**Notes:**
+- A first version of the stitching only trimmed exact word overlaps at the joins, and it left duplicated text. I rejected it and put the originals back before re-running with word alignment. The rejected version is kept in `retx/patch_v1/`.
+- For 431 and 284, I re-ran the same deterministic attempt-1 settings so the improved join checker could judge them again; there was no third transcription attempt.
+- Eps 963 and 65 have no collapsed loop spots left. Their remaining weakness is skipped speech, not loops (see above).

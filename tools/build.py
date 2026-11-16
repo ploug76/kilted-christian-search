@@ -195,6 +195,12 @@ def fix_text(text):
 # identical consecutive lines are collapsed to one line plus a visible note, so they don't flood the reader
 # or inflate search counts. Nothing real is removed: those lines are artifacts, not speech.
 LOOP_MIN=15
+# Loops that sit on a song being played (confirmed by re-transcribing just that clip, Nov 16, 2026):
+# the speech-to-text cannot follow the music, so say so instead of "speech missing".
+LOOP_NOTES={
+    ('1094','00:34:02'): '[Song playing here ("The Safety Dance", per the host right after); the lyrics could not be transcribed reliably.]',
+    ('1004','00:18:31'): '[A worship song is playing here ("Will you ride with me"); the lyrics could not be transcribed reliably.]',
+}
 LOOP_STATS=[]
 _LINE=re.compile(r'^\[(\d\d:\d\d:\d\d)\]\s*(.*)$')
 def collapse_loops(text, label=''):
@@ -210,7 +216,8 @@ def collapse_loops(text, label=''):
         if j-i>=LOOP_MIN:
             last=_LINE.match(lines[j-1]).group(1)
             out.append(lines[i])
-            out.append(f'[{last}] [Transcription glitch: the line above repeated {j-i} times from {m.group(1)} to {last}; the speech in that stretch is missing from this transcript.]')
+            note=LOOP_NOTES.get((label.split()[1] if label else '', m.group(1)))
+            out.append(f'[{last}] '+(note or f'[Transcription glitch: the line above repeated {j-i} times from {m.group(1)} to {last}; the speech in that stretch is missing from this transcript.]'))
             LOOP_STATS.append((label,m.group(1),last,j-i,key[:40]))
         else: out.extend(lines[i:j])
         i=j
