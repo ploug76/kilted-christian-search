@@ -121,7 +121,7 @@ Many short repeats (6–12 times) are real speech or song lyrics and were left a
 
 **Snippets** are now trimmed around the match, so very long transcript lines no longer push the highlighted word out of view.
 
-**Exact index check** (`tools/verify_index.py`). I brute-force counted 411 words and 158 two-word phrases straight from the published transcripts and compared them with the index. The full result is in the final report. Previous run: 0 mismatches, except 2 episodes that really are short (Ep 620 part 1 is 31 s, Ep 561 part 1 is 520 s).
+**Exact index check** (`tools/verify_index.py`). I brute-force counted 411 words and 158 two-word phrases straight from the published transcripts and compared them with the index: **0 count mismatches**. It flagged 5 "short transcripts", all expected: Ep 620 part 1 (31 s audio), Ep 561 part 1 (520 s audio), and Eps 1116, 68 and 65, which are short only because their loop junk was collapsed (see section 3).
 
 **Final build:** 1136 episodes, 74,887 terms, 1,876,653 phrase pairs, 19.1M words.
 
