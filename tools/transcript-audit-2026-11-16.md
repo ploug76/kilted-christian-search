@@ -121,7 +121,7 @@ Many short repeats (6–12 times) are real speech or song lyrics and were left a
 
 **Snippets** are now trimmed around the match, so very long transcript lines no longer push the highlighted word out of view.
 
-**Exact index check** (`tools/verify_index.py`). I brute-force counted 411 words and 158 two-word phrases straight from the published transcripts and compared them with the index: **0 count mismatches**. It flagged 5 "short transcripts", all expected: Ep 620 part 1 (31 s audio), Ep 561 part 1 (520 s audio), and Eps 1116, 68 and 65, which are short only because their loop junk was collapsed (see section 3).
+**Exact index check** (`tools/verify_index.py`, rerun after re-transcription). I brute-force counted 411 words and 158 two-word phrases from the published transcripts and compared them with the index: **0 count mismatches**. Only 2 flags, both genuinely short audio: Ep 620 part 1 (31 s) and Ep 561 part 1 (520 s).
 
 **Final build:** 1136 episodes, 74,887 terms, 1,876,653 phrase pairs, 19.1M words.
 
@@ -135,3 +135,27 @@ Many short repeats (6–12 times) are real speech or song lyrics and were left a
 - `tools/verify_index.py`, `tools/test_site.py` and `tools/test_extra.py` are the checks.
 - `tools/title-fixes-2026-11-16.md` and `tools/transcript-audit-2026-11-16.md` are the reports.
 - The service worker cache is bumped to `kcs-v4`, so installed copies pick up the new data.
+
+## 7. Re-transcription (update, Nov 16, 2026, afternoon)
+Peter approved re-transcribing the episodes where speech was missing.
+- **Setup.** Same as the original run: faster-whisper "small", CPU int8, English, with VAD. The one change is `condition_on_previous_text=False`, which stops one loop from feeding the next. Each episode got at most two attempts. Attempt 2 used beam 5, compression_ratio_threshold 2.0 and repetition_penalty 1.1.
+- **Backups.** Every original .txt/.json/.meta.json was copied to `/workspace/kilted-transcripts-backup-2026-11-16/` before anything was replaced, and no original was deleted.
+- **Checks before a new transcript was accepted:** no run of 15+ identical lines, at least 60 words a minute, and the transcript must reach 85% of the audio length.
+- **Gap check on the slow episodes.** Eps 65, 867, 116, 963 and 687 came out at 69–133 words a minute. I measured the audio energy in each gap and re-transcribed the gaps with VAD off. Only Ep 65's first 3 minutes is the intro song. The other gaps were **real speech that Whisper had skipped** (normal loudness, clear talk when re-run). So every gap over 20 s in those 5 episodes was re-transcribed with VAD off and merged back in. A gap was left unfilled only when its re-run turned into a loop, which happened mostly in song or outro stretches.
+
+| Ep | Before (words) | Now (words, wpm) | Status |
+|---|---|---|---|
+| 1116 | 115 (one line ×207) | 19,209, 175 | complete |
+| 68 | 210 | 17,542, 172 | complete |
+| 509 | | 19,199, 179 | complete |
+| 1059 | | 19,711, 170 | complete |
+| 707 | | 19,021, 175 | complete |
+| 828 | | 18,891, 174 | complete |
+| 65 | 159 | 13,780, 130 (27 min of skipped speech filled; 10 min outro/music not filled) | mostly complete |
+| 867 | | 11,686, 112 (15 min filled) | complete; slow, conversational study |
+| 116 | | 14,495, 144 (12.7 min filled) | complete |
+| 687 | | 14,451, 127 (14.3 min filled) | complete |
+| 963 | | 10,902, 105 (36 min filled) | **improved but probably still missing some speech** (attempt 1 had 15,125 words, but it failed the loop check) |
+| 1089, 730, 526, 442, 288 (short loops) | | 168–181 wpm | complete |
+
+**Still queued** (short loops; until they finish, these still show the collapsed-loop note): 1094, 1004, 719, 513, 431 and 284.
