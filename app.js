@@ -91,12 +91,29 @@ async function search(q){
     for(const u of bonus)s+=1.5*bm(u,u.map.get(id)||0,d);
     res.push({d,score:s,counts});}
   res.sort((a,b)=>b.score-a.score||(b.d.date||'').localeCompare(a.d.date||''));
-  return {res,groups,units,uniq:units.map(u=>u.label),partial,prefix};
+  // Phrases of 3+ words: the bigram index only proves each adjacent pair occurs somewhere, so the count is an
+  // upper bound. Check the actual transcripts (best-ranked first) and keep only exact matches with exact counts.
+  let unchecked=0;
+  const longU=units.filter(u=>u.phrase&&u.words.length>2);
+  if(longU.length&&res.length){
+    const res2=[];let i=0;const MAXCHK=60,WANT=PAGE;
+    while(i<res.length&&i<MAXCHK&&res2.length<WANT){
+      const batch=res.slice(i,i+10);i+=batch.length;
+      await Promise.all(batch.map(async r=>{const t=await getText(r.d.id);let ok=true;
+        for(const u of longU){const m=t.match(hlRegex({groups:[{words:u.words,phrase:true}],prefix:false}));const n=m?m.length:0;r.counts[u.label]=n;if(!n)ok=false}
+        if(ok){r.d2=1;let s=0;for(const u of units)s+=bm(u,r.counts[u.label]||0,r.d);for(const u of bonus)s+=1.5*bm(u,u.map.get(r.d.id)||0,r.d);r.score=s}else r.d2=0}));
+      for(const r of batch)if(r.d2)res2.push(r)}
+    res2.sort((a,b)=>b.score-a.score||(b.d.date||'').localeCompare(a.d.date||''));
+    const rest=res.slice(i).map(r=>(r.unchecked=true,r)); unchecked=rest.length;
+    res.length=0;res.push(...res2,...rest)}
+  return {res,groups,units,uniq:units.map(u=>u.label),partial,prefix,unchecked};
 }
 // highlight regex from query (matches raw transcript text)
 function hlRegex(Q){
   const B='(?<![\\p{L}\\p{N}])', A="(?![\\p{L}\\p{N}]|['’][\\p{L}\\p{N}])";
-  const wordPat=(w,pre)=>{const e=w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/'/g,"['’]");return pre?e+"[\\p{L}\\p{N}'’]*":e+A};
+  const rx=w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/'/g,"['’]");
+  const AL=(DATA&&DATA.aliases)||{};
+  const wordPat=(w,pre)=>{const e=rx(w);if(pre)return e+"[\\p{L}\\p{N}'’]*";return (AL[w]?'(?:'+[w,...AL[w]].map(rx).join('|')+')':e)+A};
   const alts=Q.groups.map(g=>g.words.map(w=>wordPat(w,!g.phrase&&Q.prefix&&w.length>=3)).join('(?:[^\\p{L}\\p{N}]|\\[\\d\\d:\\d\\d:\\d\\d\\])+'));
   alts.sort((a,b)=>b.length-a.length);
   return new RegExp(B+'(?:'+alts.join('|')+')','giu');
@@ -114,7 +131,7 @@ async function getText(id){
       if(!('DecompressionStream' in window))throw new Error('This browser cannot unpack transcripts; please update it.');
       const s=new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(s).text()}
     return new TextDecoder().decode(buf)})());
-  if(textCache.size>60){textCache.delete(textCache.keys().next().value)}
+  if(textCache.size>80){textCache.delete(textCache.keys().next().value)}
   return textCache.get(id);
 }
 // ---------- render ----------
@@ -128,7 +145,10 @@ async function run(){
     if(!Q){st.textContent='Type a word or phrase to search.';return}
     const where=curShow==='__all'?'all shows':curShow;
     if(!lastResults.length){st.textContent=`No episodes in ${where} mention “${q.replace(/"/g,'')}”.`+(Q.prefix?'':' Try ticking “Match word beginnings”.');return}
-    st.textContent=`${lastResults.length} episode${lastResults.length>1?'s':''} in ${where} mention “${q.replace(/"/g,'')}”${Q.partial?' (no episode has every word; showing episodes with any of them)':''}, best matches first.`;
+    const nOk=lastResults.length-(Q.unchecked||0);
+    if(Q.unchecked){st.textContent=`${nOk?nOk+' episode'+(nOk>1?'s':'')+' in '+where+' contain the exact phrase “'+q.replace(/"/g,'')+'”, best matches first. ':'No exact match found yet. '}${Q.unchecked} more episode${Q.unchecked>1?'s':''} may contain it and are checked as you scroll.`}
+    else st.textContent=`${lastResults.length} episode${lastResults.length>1?'s':''} in ${where} mention “${q.replace(/"/g,'')}”${Q.partial?' (no episode has every word; showing episodes with any of them)':''}, best matches first.`;
+    if(!lastResults.length){st.textContent=`No episodes in ${where} contain the exact phrase “${q.replace(/"/g,'')}”.`;return}
     renderMore();
   }catch(e){st.textContent='Search failed: '+e.message+'. Check your connection and try again.'}
 }
@@ -141,7 +161,7 @@ function renderMore(){
     if(r.counts){const parts=lastQuery.units.map(u=>`${u.label}${u.pre?'…':''} ×${r.counts[u.label]}`);
       const tot=Object.values(r.counts).reduce((a,b)=>a+b,0);
       const single=lastQuery.units.length===1, u0=lastQuery.units[0];
-      counts=`<div class="counts">${single?(u0.phrase?`${tot} time${tot===1?'':'s'} as a phrase`:`${tot} match${tot===1?'':'es'}`):esc(parts.join(' · '))}<span class="phr"></span></div>`}
+      counts=`<div class="counts">${r.unchecked?'Possible match, checking…':single?(u0.phrase?`${tot} time${tot===1?'':'s'} as a phrase`:`${tot} match${tot===1?'':'es'}`):esc(parts.join(' · '))}<span class="phr"></span></div>`}
     c.innerHTML=`<span class="show">${esc(d.show)}</span><h2>${esc(d.title)}</h2>
       <div class="meta">${fmtDate(d.date)}${d.ep?' · Ep '+esc(d.ep):''}${d.dur?' · '+fmtDur(d.dur):''}</div>${counts}
       ${r.counts?'<div class="snip">Loading where it comes up…</div>':''}
@@ -157,11 +177,13 @@ async function fillSnippet(card){
     const pr=phraseRegex(Q); let m=null;
     if(pr){const all=text.match(pr);const n=all?all.length:0;const ph=card.querySelector('.phr');
       if(ph&&!(Q.units.length===1&&Q.units[0].phrase&&Q.units[0].words.length===2))ph.textContent=Q.units.length===1&&Q.units[0].phrase?'':` · together as a phrase: ${n}`;
-      if(Q.units.length===1&&Q.units[0].phrase&&Q.units[0].words.length>2){const c=card.querySelector('.counts');c.firstChild.textContent=`${n} time${n===1?'':'s'} as a phrase`} pr.lastIndex=0; m=pr.exec(text)}
+      if(Q.units.length===1&&Q.units[0].phrase&&Q.units[0].words.length>2){const c=card.querySelector('.counts');c.firstChild.textContent=n?`${n} time${n===1?'':'s'} as a phrase`:'Not an exact match: the words are here, but not together as this phrase'} pr.lastIndex=0; m=pr.exec(text)}
     const re=hlRegex(Q); if(!m){re.lastIndex=0;m=re.exec(text)}
     if(!m){sn.textContent='(match is in a word form; open the transcript)';return}
     const ls=lineStart(text,m.index); const tsm=text.slice(ls,ls+12).match(/^\[(\d\d:\d\d:\d\d)\]/);
-    let a=lineStart(text,Math.max(0,m.index-140)); let z=text.indexOf('\n',Math.min(text.length,m.index+m[0].length+160)); if(z<0)z=text.length;
+    let a=lineStart(text,Math.max(0,m.index-140)); if(m.index-a>200){a=text.indexOf(' ',m.index-140)+1}
+    let z=text.indexOf('\n',Math.min(text.length,m.index+m[0].length+160)); if(z<0)z=text.length;
+    if(z-(m.index+m[0].length)>260){const sp=text.lastIndexOf(' ',m.index+m[0].length+220);z=sp>m.index+m[0].length?sp:z}
     let piece=text.slice(a,z).replace(/\[\d\d:\d\d:\d\d\]\s*/g,'').replace(/\s+/g,' ');
     sn.innerHTML=(tsm?`<span class="ts">${tsm[1]}</span>`:'')+(a>0?'…':'')+highlight(piece,hlRegex(Q))+(z<text.length?'…':'');
   }catch(e){sn.textContent='Could not load the transcript ('+e.message+').'}
