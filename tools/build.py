@@ -122,6 +122,19 @@ EPISODE_FIXES={
     # two different recordings are both titled Ep863 on Podbean; this one is the Memorial Day Book of Heaven (Romans study)
     'https://mcdn.podbean.com/mf/web/gr4bz83me7gndag1/liveshow_2025_05_26_2100.mp3': {'title': 'KC Ep863: Book of Heaven. (May 26, Memorial Day)'},
 }
+# Air dates from Rumble (RumbleRankings last-10 list, page updated 2026-11-24).
+# These episodes were batch-uploaded to Podbean, so RSS/JSON-LD pubDates are the
+# upload day, not the live air date. Keyed by audio URL. See date-fixes-2026-11-24.md.
+DATE_FIXES={
+    'https://mcdn.podbean.com/mf/web/dmgsmjac8k99fwm4/KC_Ep_1121_What_is_Heaven_Bibl878pi.mp3': '2026-07-23',
+    'https://mcdn.podbean.com/mf/web/4unme5q8u5ccwfh6/KC_Ep_1119_The_Book_by_the_Fire8cdq0.mp3': '2026-07-21',
+    'https://mcdn.podbean.com/mf/web/qyvbpu7jw6v799r9/KC_Ep_1118_News_80s_Music_Nigh8sfao.mp3': '2026-07-18',
+    'https://mcdn.podbean.com/mf/web/i2riv9gp7s9ax3rd/KC_Ep_1117_Weaponization_of_Chrbcr1b.mp3': '2026-07-17',
+    'https://mcdn.podbean.com/mf/web/qryrxhmuk9amcaq8/KC_Ep_1116_End_of_Days_Deceptio8l0bl.mp3': '2026-07-16',
+    'https://mcdn.podbean.com/mf/web/6wyr278856hr6vua/KC_Ep_1115_Political_Deaths_anda969s.mp3': '2026-07-15',
+    'https://mcdn.podbean.com/mf/web/pn622ngcqtaq7v8x/KC_Ep_1114_Anything_but_Nirvana8kmpl.mp3': '2026-07-11',
+    'https://mcdn.podbean.com/mf/web/srt2zryewnpppec2/KC_Ep_1113_Mandela_Effectbmu2d.mp3': '2026-07-10',
+}
 
 # Transcript name/term corrections (Nov 16, 2026 audit). Applied to the published copy of each transcript
 # (site/t/*.txt.gz) and to the search index; the source transcripts are not modified. Only unambiguous
@@ -239,6 +252,8 @@ for r in rows:
             if k in o: r[k]=o[k]
         if 'url' in o: r['_url']=o['url']
         if 'dur' in o: r['_dur']=o['dur']
+    d=DATE_FIXES.get(r['audio_url'])
+    if d: r['date']=d
 rows.sort(key=sortkey, reverse=True)
 for i,r in enumerate(rows):
     base=r['transcript'][:-5]
